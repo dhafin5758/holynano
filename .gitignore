@@ -1,0 +1,15 @@
+# MSVC build artifacts
+*.obj
+*.pdb
+*.ilk
+*.exe
+*.exp
+*.lib
+
+# Visual Studio directories
+.vs/
+Debug/
+Release/
+x64/
+x86/
+\.vscode

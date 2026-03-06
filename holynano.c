@@ -1,0 +1,13 @@
+#include <termios.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+int main(){
+
+
+    printf("testing");
+     char c;
+  while (read(STDIN_FILENO, &c, 1) == 1 && c != 'q');
+    return 0;
+}
