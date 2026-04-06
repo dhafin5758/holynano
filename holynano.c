@@ -94,6 +94,7 @@ int main() {
   // start with one empty line
   buffer[0][0] = '\0';
   num_rows = 1;
+  refresh_screen();
   
   char c;
   while (read(STDIN_FILENO, &c, 1) == 1) {
@@ -102,9 +103,20 @@ int main() {
       read(STDIN_FILENO, &c, 1);  // read [
       read(STDIN_FILENO, &c, 1);  // read A/B/C/D
       
-      if (c == 'A' && cursor_y > 0) cursor_y--;           // up
-      else if (c == 'B' && cursor_y < num_rows - 1) cursor_y++;  // down
-      else if (c == 'C') cursor_x++;                       // right
+     if (c == 'A' && cursor_y > 0) {                      // up
+        cursor_y--;
+        int len = strlen(buffer[cursor_y]);
+        if (cursor_x > len) cursor_x = len;
+      }
+      else if (c == 'B' && cursor_y < num_rows - 1) {      // down
+        cursor_y++;
+        int len = strlen(buffer[cursor_y]);
+        if (cursor_x > len) cursor_x = len;
+      }
+      else if (c == 'C') {                                  // right
+        int len = strlen(buffer[cursor_y]);
+        if (cursor_x < len) cursor_x++;
+      }
       else if (c == 'D' && cursor_x > 0) cursor_x--;       // left
     }
     else if (c == 24) {  // Ctrl+X
@@ -117,14 +129,21 @@ int main() {
     else if (c >= 32 && c < 127) {  // printable char
       int len = strlen(buffer[cursor_y]);
       if (len < MAX_COLS - 1) {
-        buffer[cursor_y][len] = c;
-        buffer[cursor_y][len + 1] = '\0';
+        if (cursor_x > len) cursor_x = len;
+        memmove(&buffer[cursor_y][cursor_x + 1],
+                &buffer[cursor_y][cursor_x],
+                len - cursor_x + 1);
+        buffer[cursor_y][cursor_x] = c;
         cursor_x++;
       }
     }
     else if (c == '\r' || c == '\n') {  // Enter in raw mode is usually '\r'
       if (num_rows < MAX_ROWS - 1) {
-        buffer[num_rows][0] = '\0';
+        int len = strlen(buffer[cursor_y]);
+        if (cursor_x > len) cursor_x = len;
+
+        memmove(buffer[cursor_y + 1], &buffer[cursor_y][cursor_x], len - cursor_x + 1);
+        buffer[cursor_y][cursor_x] = '\0';
         num_rows++;
         cursor_y++;
         cursor_x = 0;
