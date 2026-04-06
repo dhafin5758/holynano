@@ -30,6 +30,15 @@ void enableRawMode() {
   tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
 }
 
+void display_help() {
+  const char *help = "Ctrl+T Delete Line | Ctrl+X Exit";
+  write(STDOUT_FILENO, "\r\n", 2);
+  write(STDOUT_FILENO, "\x1b[7m", 4);
+  write(STDOUT_FILENO, help, strlen(help));
+  write(STDOUT_FILENO, "\x1b[K", 3);
+  write(STDOUT_FILENO, "\x1b[m", 3);
+}
+
 void refresh_screen() {
   write(STDOUT_FILENO, "\x1b[2J", 4);    // clear screen
   write(STDOUT_FILENO, "\x1b[H", 3);     // cursor home
@@ -41,6 +50,8 @@ void refresh_screen() {
       write(STDOUT_FILENO, "\r\n", 2);
     }
   }
+
+  display_help();
 
   
   // place cursor
