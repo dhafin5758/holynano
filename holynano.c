@@ -41,12 +41,15 @@ void refresh_screen() {
       write(STDOUT_FILENO, "\r\n", 2);
     }
   }
+
   
   // place cursor
   char buf[32];
   snprintf(buf, sizeof(buf), "\x1b[%d;%dH", cursor_y + 1, cursor_x + 1);
   write(STDOUT_FILENO, buf, strlen(buf));
 }
+
+ 
 int main() {
   enableRawMode();
   
@@ -96,7 +99,7 @@ int main() {
         }
       }
     }
-    
+       
     refresh_screen();
   }
   
