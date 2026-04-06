@@ -47,6 +47,35 @@ void refresh_screen() {
   snprintf(buf, sizeof(buf), "\x1b[%d;%dH", cursor_y + 1, cursor_x + 1);
   write(STDOUT_FILENO, buf, strlen(buf));
 }
+
+void deleteLine() {
+  if (num_rows == 0) return;
+
+
+  if (num_rows == 1) {
+    buffer[0][0] = '\0';
+    cursor_x = 0;
+    cursor_y = 0;
+    return;
+  }
+
+
+  for (int i = cursor_y; i < num_rows - 1; i++) {
+    strcpy(buffer[i], buffer[i + 1]);
+  }
+
+
+  num_rows--;
+  buffer[num_rows][0] = '\0';
+
+
+  if (cursor_y >= num_rows) cursor_y = num_rows - 1;
+
+
+  int len = strlen(buffer[cursor_y]);
+  if (cursor_x > len) cursor_x = len;
+}
+
 int main() {
   enableRawMode();
   
@@ -69,6 +98,9 @@ int main() {
     else if (c == 24) {  // Ctrl+X
       write(STDOUT_FILENO, "\x1b[2J\x1b[H", 7);
       break;
+    }
+     else if (c == 20) {  // Ctrl+T (delete line)
+      deleteLine();
     }
     else if (c >= 32 && c < 127) {  // printable char
       int len = strlen(buffer[cursor_y]);
