@@ -32,7 +32,7 @@ void enableRawMode() {
 }
 
 void display_help() {
-	const char *help = "Ctrl+T Delete Line | Ctrl+X Exit";
+	const char *help = "Ctrl+T Delete Line | Ctrl+X Exit | Ctrl+T delete line | Ctrl+Y copy line | Ctrl+P paste line|";
 	write(STDOUT_FILENO, "\r\n", 2);
 	write(STDOUT_FILENO, "\x1b[7m", 4);
 	write(STDOUT_FILENO, help, strlen(help));
