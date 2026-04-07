@@ -1,70 +1,12 @@
 #include <stdlib.h>
-#include <termios.h>
-#include <unistd.h>
 #include <stdio.h>
 #include <string.h>
-#define MAX_ROWS 100
-#define MAX_COLS 100
+#include <unistd.h>
 
-char buffer[MAX_ROWS][MAX_COLS];
-int cursor_x = 0, cursor_y = 0;
-int num_rows = 0;
-struct termios orig_termios;
-
-char clipboard[MAX_COLS];
-
-void disableRawMode() {
-  tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios);
-}
-
-void enableRawMode() {
-  tcgetattr(STDIN_FILENO, &orig_termios);
-  atexit(disableRawMode);
-
-  struct termios raw = orig_termios;
-  raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
-  raw.c_oflag &= ~(OPOST);
-  raw.c_cflag |= (CS8);
-  raw.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
-  raw.c_cc[VMIN] = 1;
-  raw.c_cc[VTIME] = 0;
-
-  tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
-}
-
-void display_help() {
-  const char *help = "Ctrl+T Delete Line | Ctrl+X Exit";
-  write(STDOUT_FILENO, "\r\n", 2);
-  write(STDOUT_FILENO, "\x1b[7m", 4);
-  write(STDOUT_FILENO, help, strlen(help));
-  write(STDOUT_FILENO, "\x1b[K", 3);
-  write(STDOUT_FILENO, "\x1b[m", 3);
-}
-
-void refresh_screen() {
-  write(STDOUT_FILENO, "\x1b[2J", 4);    // clear screen
-  write(STDOUT_FILENO, "\x1b[H", 3);     // cursor home
-  
-  // draw each row
-  for (int i = 0; i < num_rows; i++) {
-    write(STDOUT_FILENO, buffer[i], strlen(buffer[i]));
-    if (i < num_rows - 1) {
-      write(STDOUT_FILENO, "\r\n", 2);
-    }
-  }
-
-  display_help();
-
-  
-  // place cursor
-  char buf[32];
-  snprintf(buf, sizeof(buf), "\x1b[%d;%dH", cursor_y + 1, cursor_x + 1);
-  write(STDOUT_FILENO, buf, strlen(buf));
-} 
+#include "basicFramework.h"
 
 void deleteLine() {
   if (num_rows == 0) return;
-
 
   if (num_rows == 1) {
     buffer[0][0] = '\0';
@@ -73,18 +15,14 @@ void deleteLine() {
     return;
   }
 
-
   for (int i = cursor_y; i < num_rows - 1; i++) {
     strcpy(buffer[i], buffer[i + 1]);
   }
 
-
   num_rows--;
   buffer[num_rows][0] = '\0';
 
-
   if (cursor_y >= num_rows) cursor_y = num_rows - 1;
-
 
   int len = strlen(buffer[cursor_y]);
   if (cursor_x > len) cursor_x = len;
@@ -95,25 +33,23 @@ void copyLine() {
     clipboard[0] = '\0';
     return;
   }
+
   strncpy(clipboard, buffer[cursor_y], MAX_COLS - 1);
   clipboard[MAX_COLS - 1] = '\0';
 }
 
 void pasteLine() {
   if (num_rows >= MAX_ROWS) return;
-  if (clipboard[0] == '\0') return; // nothing to paste
-
+  if (clipboard[0] == '\0') return;
 
   for (int i = num_rows; i > cursor_y + 1; i--) {
     strncpy(buffer[i], buffer[i - 1], MAX_COLS - 1);
     buffer[i][MAX_COLS - 1] = '\0';
   }
 
-
   strncpy(buffer[cursor_y + 1], clipboard, MAX_COLS - 1);
   buffer[cursor_y + 1][MAX_COLS - 1] = '\0';
   num_rows++;
-
 
   cursor_y++;
   cursor_x = strlen(buffer[cursor_y]);
