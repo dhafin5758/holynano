@@ -11,6 +11,8 @@ int cursor_x = 0, cursor_y = 0;
 int num_rows = 0;
 struct termios orig_termios;
 
+char clipboard[MAX_COLS];
+
 void disableRawMode() {
   tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios);
 }
@@ -88,6 +90,35 @@ void deleteLine() {
   if (cursor_x > len) cursor_x = len;
 }
 
+void copyLine() {
+  if (num_rows == 0) {
+    clipboard[0] = '\0';
+    return;
+  }
+  strncpy(clipboard, buffer[cursor_y], MAX_COLS - 1);
+  clipboard[MAX_COLS - 1] = '\0';
+}
+
+void pasteLine() {
+  if (num_rows >= MAX_ROWS) return;
+  if (clipboard[0] == '\0') return; // nothing to paste
+
+
+  for (int i = num_rows; i > cursor_y + 1; i--) {
+    strncpy(buffer[i], buffer[i - 1], MAX_COLS - 1);
+    buffer[i][MAX_COLS - 1] = '\0';
+  }
+
+
+  strncpy(buffer[cursor_y + 1], clipboard, MAX_COLS - 1);
+  buffer[cursor_y + 1][MAX_COLS - 1] = '\0';
+  num_rows++;
+
+
+  cursor_y++;
+  cursor_x = strlen(buffer[cursor_y]);
+}
+
 int main() {
   enableRawMode();
   
@@ -123,8 +154,15 @@ int main() {
       write(STDOUT_FILENO, "\x1b[2J\x1b[H", 7);
       break;
     }
-     else if (c == 20) {  // Ctrl+T (delete line)
+     else if (c == 20) {  // Ctrl+k (delete line)
       deleteLine();
+    }
+     else if (c == 25) {  // Ctrl+Y (copy line)
+      copyLine();
+      
+    }
+     else if (c == 16) {  // Ctrl+P (paste line)
+      pasteLine();
     }
     else if (c >= 32 && c < 127) {  // printable char
       int len = strlen(buffer[cursor_y]);
