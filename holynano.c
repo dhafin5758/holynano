@@ -30,6 +30,15 @@ void enableRawMode() {
   tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
 }
 
+void display_help() {
+  const char *help = "Ctrl+T Delete Line | Ctrl+X Exit";
+  write(STDOUT_FILENO, "\r\n", 2);
+  write(STDOUT_FILENO, "\x1b[7m", 4);
+  write(STDOUT_FILENO, help, strlen(help));
+  write(STDOUT_FILENO, "\x1b[K", 3);
+  write(STDOUT_FILENO, "\x1b[m", 3);
+}
+
 void refresh_screen() {
   write(STDOUT_FILENO, "\x1b[2J", 4);    // clear screen
   write(STDOUT_FILENO, "\x1b[H", 3);     // cursor home
@@ -41,18 +50,51 @@ void refresh_screen() {
       write(STDOUT_FILENO, "\r\n", 2);
     }
   }
+
+  display_help();
+
   
   // place cursor
   char buf[32];
   snprintf(buf, sizeof(buf), "\x1b[%d;%dH", cursor_y + 1, cursor_x + 1);
   write(STDOUT_FILENO, buf, strlen(buf));
+} 
+
+void deleteLine() {
+  if (num_rows == 0) return;
+
+
+  if (num_rows == 1) {
+    buffer[0][0] = '\0';
+    cursor_x = 0;
+    cursor_y = 0;
+    return;
+  }
+
+
+  for (int i = cursor_y; i < num_rows - 1; i++) {
+    strcpy(buffer[i], buffer[i + 1]);
+  }
+
+
+  num_rows--;
+  buffer[num_rows][0] = '\0';
+
+
+  if (cursor_y >= num_rows) cursor_y = num_rows - 1;
+
+
+  int len = strlen(buffer[cursor_y]);
+  if (cursor_x > len) cursor_x = len;
 }
+
 int main() {
   enableRawMode();
   
   // start with one empty line
   buffer[0][0] = '\0';
   num_rows = 1;
+  refresh_screen();
   
   char c;
   while (read(STDIN_FILENO, &c, 1) == 1) {
@@ -61,26 +103,47 @@ int main() {
       read(STDIN_FILENO, &c, 1);  // read [
       read(STDIN_FILENO, &c, 1);  // read A/B/C/D
       
-      if (c == 'A' && cursor_y > 0) cursor_y--;           // up
-      else if (c == 'B' && cursor_y < num_rows - 1) cursor_y++;  // down
-      else if (c == 'C') cursor_x++;                       // right
+     if (c == 'A' && cursor_y > 0) {                      // up
+        cursor_y--;
+        int len = strlen(buffer[cursor_y]);
+        if (cursor_x > len) cursor_x = len;
+      }
+      else if (c == 'B' && cursor_y < num_rows - 1) {      // down
+        cursor_y++;
+        int len = strlen(buffer[cursor_y]);
+        if (cursor_x > len) cursor_x = len;
+      }
+      else if (c == 'C') {                                  // right
+        int len = strlen(buffer[cursor_y]);
+        if (cursor_x < len) cursor_x++;
+      }
       else if (c == 'D' && cursor_x > 0) cursor_x--;       // left
     }
     else if (c == 24) {  // Ctrl+X
       write(STDOUT_FILENO, "\x1b[2J\x1b[H", 7);
       break;
     }
+     else if (c == 20) {  // Ctrl+T (delete line)
+      deleteLine();
+    }
     else if (c >= 32 && c < 127) {  // printable char
       int len = strlen(buffer[cursor_y]);
       if (len < MAX_COLS - 1) {
-        buffer[cursor_y][len] = c;
-        buffer[cursor_y][len + 1] = '\0';
+        if (cursor_x > len) cursor_x = len;
+        memmove(&buffer[cursor_y][cursor_x + 1],
+                &buffer[cursor_y][cursor_x],
+                len - cursor_x + 1);
+        buffer[cursor_y][cursor_x] = c;
         cursor_x++;
       }
     }
     else if (c == '\r' || c == '\n') {  // Enter in raw mode is usually '\r'
       if (num_rows < MAX_ROWS - 1) {
-        buffer[num_rows][0] = '\0';
+        int len = strlen(buffer[cursor_y]);
+        if (cursor_x > len) cursor_x = len;
+
+        memmove(buffer[cursor_y + 1], &buffer[cursor_y][cursor_x], len - cursor_x + 1);
+        buffer[cursor_y][cursor_x] = '\0';
         num_rows++;
         cursor_y++;
         cursor_x = 0;
@@ -96,7 +159,7 @@ int main() {
         }
       }
     }
-    
+       
     refresh_screen();
   }
   
