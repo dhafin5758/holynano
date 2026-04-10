@@ -1,9 +1,22 @@
-#include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
 #include "basicLine.h"
+#include "manageFile.h"
+
+static void showReadOnlyMessage(void) {
+  setStatusMessage("VIEW ONLY | Editing disabled | Ctrl+X Exit");
+}
+
+static int blockIfViewOnly(void) {
+  if (!isViewOnlyMode()) {
+    return 0;
+  }
+
+  showReadOnlyMessage();
+  refresh_screen();
+  return 1;
+}
 
 void deleteLine() {
   if (num_rows == 0) return;
@@ -84,6 +97,7 @@ void run_editor_loop(void) {
       break;
     }
      else if (c == 20) {  // Ctrl+T (delete line)
+      if (blockIfViewOnly()) continue;
       deleteLine();
     }
      else if (c == 25) {  // Ctrl+Y (copy line)
@@ -91,9 +105,15 @@ void run_editor_loop(void) {
       
     }
      else if (c == 16) {  // Ctrl+P (paste line)
+      if (blockIfViewOnly()) continue;
       pasteLine();
     }
+    else if (c == 19) {  // Ctrl+S (save file)
+      saveFile();
+    }
     else if (c >= 32 && c < 127) {  // printable char
+      if (blockIfViewOnly()) continue;
+
       int len = strlen(buffer[cursor_y]);
       if (len < MAX_COLS - 1) {
         if (cursor_x > len) cursor_x = len;
@@ -105,6 +125,8 @@ void run_editor_loop(void) {
       }
     }
     else if (c == '\r' || c == '\n') {  // Enter in raw mode is usually '\r'
+      if (blockIfViewOnly()) continue;
+
       if (num_rows < MAX_ROWS - 1) {
         int len = strlen(buffer[cursor_y]);
         if (cursor_x > len) cursor_x = len;
@@ -117,6 +139,8 @@ void run_editor_loop(void) {
       }
     }
     else if (c == 127) {  // Backspace
+      if (blockIfViewOnly()) continue;
+
       if (cursor_x > 0) {
         int len = strlen(buffer[cursor_y]);
         if (cursor_x <= len) {
