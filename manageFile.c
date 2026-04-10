@@ -8,6 +8,7 @@
 #define MAX_FILE_PATH 512
 
 static char activeFilePath[MAX_FILE_PATH];
+static int view_only_mode = 0;
 
 static void setActiveFilePath(const char *filename) {
   if (filename == NULL) {
@@ -72,6 +73,14 @@ static void initEmptyBuffer(void) {
   cursor_y = 0;
 }
 
+void setViewOnlyMode(int enabled) {
+  view_only_mode = enabled ? 1 : 0;
+}
+
+int isViewOnlyMode(void) {
+  return view_only_mode;
+}
+
 void createEmptyFile(const char *filename) {
   FILE *file = fopen(filename, "a");
   if (file == NULL) {
@@ -119,11 +128,21 @@ void loadFile(const char *filename) {
 }
 
 void openOrCreateFile(const char *filename) {
-  createEmptyFile(filename);
-  loadFile(filename);
+  if (access(filename, F_OK) == 0) {
+    loadFile(filename);
+    return;
+  }
+
+  setActiveFilePath(filename);
+  initEmptyBuffer();
 }
 
 void saveFile(void) {
+  if (view_only_mode) {
+    setStatusMessage("VIEW ONLY | Saving disabled | Ctrl+X Exit");
+    return;
+  }
+
   if (activeFilePath[0] == '\0') {
     if (!requestFileNameForSave()) {
       return;

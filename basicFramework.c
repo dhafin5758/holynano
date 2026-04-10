@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "basicFramework.h"
+#include "manageFile.h"
 
 char buffer[MAX_ROWS][MAX_COLS];
 int cursor_x = 0, cursor_y = 0;
@@ -43,7 +44,9 @@ void enableRawMode() {
 }
 
 void display_help() {
-	const char *help = "Ctrl+S Save | Ctrl+T Delete Line | Ctrl+X Exit";
+	const char *help = isViewOnlyMode()
+		? "VIEW ONLY | Ctrl+X Exit"
+		: "Ctrl+S Save | Ctrl+T Delete Line | Ctrl+X Exit";
 	const char *text = status_message[0] != '\0' ? status_message : help;
 	write(STDOUT_FILENO, "\r\n", 2);
 	write(STDOUT_FILENO, "\x1b[7m", 4);
