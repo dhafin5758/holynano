@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/ioctl.h>
 
 #include "basicFramework.h"
 
@@ -32,10 +33,42 @@ void enableRawMode() {
 }
 
 void display_help() {
-	const char *help = "Ctrl+T Delete Line | Ctrl+X Exit | Ctrl+T delete line | Ctrl+Y copy line | Ctrl+P paste line|";
-	write(STDOUT_FILENO, "\r\n", 2);
+	const char *help_line1 = "|Ctrl+X EXIT| |Ctrl+T delete line| |Ctrl+Y copy line| |Ctrl+P paste line|";
+	const char *help_line2 = "|Ctrl+B start selection| |Ctrl+E end selection| |Ctrl+O paste selection|";
+	struct winsize ws;
+	int bottom_row = 24;
+	int cols = 80;
+	int line1_len = strlen(help_line1);
+	int line2_len = strlen(help_line2);
+
+	if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == 0) {
+		if (ws.ws_row > 0) {
+			bottom_row = ws.ws_row;
+		}
+		if (ws.ws_col > 0) {
+			cols = ws.ws_col;
+		}
+	}
+
+	if (line1_len > cols) line1_len = cols;
+	if (line2_len > cols) line2_len = cols;
+
+	int row1 = bottom_row - 1;
+	int row2 = bottom_row;
+	if (row1 < 1) row1 = 1;
+
+	char pos[32];
+	snprintf(pos, sizeof(pos), "\x1b[%d;1H", row1);
+	write(STDOUT_FILENO, pos, strlen(pos));
 	write(STDOUT_FILENO, "\x1b[7m", 4);
-	write(STDOUT_FILENO, help, strlen(help));
+	write(STDOUT_FILENO, help_line1, line1_len);
+	write(STDOUT_FILENO, "\x1b[K", 3);
+	write(STDOUT_FILENO, "\x1b[m", 3);
+
+	snprintf(pos, sizeof(pos), "\x1b[%d;1H", row2);
+	write(STDOUT_FILENO, pos, strlen(pos));
+	write(STDOUT_FILENO, "\x1b[7m", 4);
+	write(STDOUT_FILENO, help_line2, line2_len);
 	write(STDOUT_FILENO, "\x1b[K", 3);
 	write(STDOUT_FILENO, "\x1b[m", 3);
 }
