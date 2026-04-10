@@ -1,8 +1,69 @@
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "basicFramework.h"
 #include "manageFile.h"
+
+#define MAX_FILE_PATH 512
+
+static char activeFilePath[MAX_FILE_PATH];
+
+static void setActiveFilePath(const char *filename) {
+  if (filename == NULL) {
+    activeFilePath[0] = '\0';
+    return;
+  }
+
+  strncpy(activeFilePath, filename, MAX_FILE_PATH - 1);
+  activeFilePath[MAX_FILE_PATH - 1] = '\0';
+}
+
+static int requestFileNameForSave(void) {
+  char inputPath[MAX_FILE_PATH];
+  int len = 0;
+  char c;
+  char prompt[256];
+
+  inputPath[0] = '\0';
+
+  setStatusMessage("Save as:  (Ctrl+C cancel)");
+  refresh_screen();
+
+  while (read(STDIN_FILENO, &c, 1) == 1) {
+    if (c == '\r' || c == '\n') {
+      break;
+    }
+
+    if (c == 3) {
+      setStatusMessage("");
+      return 0;
+    }
+
+    if (c == 127 || c == 8) {
+      if (len > 0) {
+        len--;
+        inputPath[len] = '\0';
+      }
+    } else if (c >= 32 && c < 127 && len < MAX_FILE_PATH - 1) {
+      inputPath[len++] = c;
+      inputPath[len] = '\0';
+    }
+
+    snprintf(prompt, sizeof(prompt), "Save as: %s  (Ctrl+C cancel)", inputPath);
+    setStatusMessage(prompt);
+    refresh_screen();
+  }
+
+  if (len == 0) {
+    setStatusMessage("");
+    return 0;
+  }
+
+  setActiveFilePath(inputPath);
+  setStatusMessage("");
+  return 1;
+}
 
 static void initEmptyBuffer(void) {
   buffer[0][0] = '\0';
@@ -28,6 +89,8 @@ void loadFile(const char *filename) {
     initEmptyBuffer();
     return;
   }
+
+  setActiveFilePath(filename);
 
   num_rows = 0;
 
@@ -58,4 +121,28 @@ void loadFile(const char *filename) {
 void openOrCreateFile(const char *filename) {
   createEmptyFile(filename);
   loadFile(filename);
+}
+
+void saveFile(void) {
+  if (activeFilePath[0] == '\0') {
+    if (!requestFileNameForSave()) {
+      return;
+    }
+  }
+
+  FILE *file = fopen(activeFilePath, "w");
+  if (file == NULL) {
+    setStatusMessage("");
+    return;
+  }
+
+  for (int i = 0; i < num_rows; i++) {
+    fputs(buffer[i], file);
+    if (i < num_rows - 1) {
+      fputc('\n', file);
+    }
+  }
+
+  fclose(file);
+  setStatusMessage("");
 }

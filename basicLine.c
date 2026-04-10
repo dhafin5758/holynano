@@ -4,6 +4,7 @@
 #include <unistd.h>
 
 #include "basicLine.h"
+#include "manageFile.h"
 
 void deleteLine() {
   if (num_rows == 0) return;
@@ -92,6 +93,9 @@ void run_editor_loop(void) {
     }
      else if (c == 16) {  // Ctrl+P (paste line)
       pasteLine();
+    }
+    else if (c == 19) {  // Ctrl+S (save file)
+      saveFile();
     }
     else if (c >= 32 && c < 127) {  // printable char
       int len = strlen(buffer[cursor_y]);

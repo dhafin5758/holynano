@@ -11,6 +11,17 @@ int cursor_x = 0, cursor_y = 0;
 int num_rows = 0;
 struct termios orig_termios;
 char clipboard[MAX_COLS];
+char status_message[256];
+
+void setStatusMessage(const char *message) {
+	if (message == NULL) {
+		status_message[0] = '\0';
+		return;
+	}
+
+	strncpy(status_message, message, sizeof(status_message) - 1);
+	status_message[sizeof(status_message) - 1] = '\0';
+}
 
 void disableRawMode() {
 	tcsetattr(STDIN_FILENO, TCSAFLUSH, &orig_termios);
@@ -32,10 +43,11 @@ void enableRawMode() {
 }
 
 void display_help() {
-	const char *help = "Ctrl+T Delete Line | Ctrl+X Exit";
+	const char *help = "Ctrl+S Save | Ctrl+T Delete Line | Ctrl+X Exit";
+	const char *text = status_message[0] != '\0' ? status_message : help;
 	write(STDOUT_FILENO, "\r\n", 2);
 	write(STDOUT_FILENO, "\x1b[7m", 4);
-	write(STDOUT_FILENO, help, strlen(help));
+	write(STDOUT_FILENO, text, strlen(text));
 	write(STDOUT_FILENO, "\x1b[K", 3);
 	write(STDOUT_FILENO, "\x1b[m", 3);
 }

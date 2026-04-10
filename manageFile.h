@@ -4,5 +4,6 @@
 void createEmptyFile(const char *filename);
 void loadFile(const char *filename);
 void openOrCreateFile(const char *filename);
+void saveFile(void);
 
 #endif
