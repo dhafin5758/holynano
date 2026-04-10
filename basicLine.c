@@ -1,9 +1,22 @@
-#include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
 #include "basicLine.h"
+#include "manageFile.h"
+
+static void showReadOnlyMessage(void) {
+  setStatusMessage("VIEW ONLY | Editing disabled | Ctrl+X Exit");
+}
+
+static int blockIfViewOnly(void) {
+  if (!isViewOnlyMode()) {
+    return 0;
+  }
+
+  showReadOnlyMessage();
+  refresh_screen();
+  return 1;
+}
 
 void deleteLine() {
   if (num_rows == 0) return;
@@ -38,6 +51,15 @@ void copyLine() {
   clipboard[MAX_COLS - 1] = '\0';
 }
 
+void cutLine() {
+  if (num_rows == 0) {
+    clipboard[0] = '\0';
+    return;
+  }
+  copyLine();
+  deleteLine();
+}
+
 void pasteLine() {
   if (num_rows >= MAX_ROWS) return;
   if (clipboard[0] == '\0') return;
@@ -58,7 +80,7 @@ void pasteLine() {
 void run_editor_loop(void) {
   char c;
   while (read(STDIN_FILENO, &c, 1) == 1) {
-    // Arrow keys are: ESC [ A/B/C/D
+
     if (c == '\x1b') {
       read(STDIN_FILENO, &c, 1);  // read [
       read(STDIN_FILENO, &c, 1);  // read A/B/C/D
@@ -84,16 +106,25 @@ void run_editor_loop(void) {
       break;
     }
      else if (c == 20) {  // Ctrl+T (delete line)
+      if (blockIfViewOnly()) continue;
       deleteLine();
     }
      else if (c == 25) {  // Ctrl+Y (copy line)
       copyLine();
-      
     }
-     else if (c == 16) {  // Ctrl+P (paste line)
+    else if (c == 16) {  // Ctrl+P (paste line)
+      if (blockIfViewOnly()) continue;
       pasteLine();
     }
+    else if (c == 11) {  // Ctrl+K (cut line)
+      cutLine();
+    }
+    else if (c == 19) {  // Ctrl+S (save file)
+      saveFile();
+    }
     else if (c >= 32 && c < 127) {  // printable char
+      if (blockIfViewOnly()) continue;
+
       int len = strlen(buffer[cursor_y]);
       if (len < MAX_COLS - 1) {
         if (cursor_x > len) cursor_x = len;
@@ -105,6 +136,8 @@ void run_editor_loop(void) {
       }
     }
     else if (c == '\r' || c == '\n') {  // Enter in raw mode is usually '\r'
+      if (blockIfViewOnly()) continue;
+
       if (num_rows < MAX_ROWS - 1) {
         int len = strlen(buffer[cursor_y]);
         if (cursor_x > len) cursor_x = len;
@@ -117,6 +150,8 @@ void run_editor_loop(void) {
       }
     }
     else if (c == 127) {  // Backspace
+      if (blockIfViewOnly()) continue;
+
       if (cursor_x > 0) {
         int len = strlen(buffer[cursor_y]);
         if (cursor_x <= len) {
@@ -124,6 +159,26 @@ void run_editor_loop(void) {
                   &buffer[cursor_y][cursor_x], len - cursor_x + 1);
           cursor_x--;
         }
+      } else if (cursor_y > 0) {
+        int prev_len = strlen(buffer[cursor_y - 1]);
+        int curr_len = strlen(buffer[cursor_y]);
+        int space = MAX_COLS - 1 - prev_len;
+        if (space > 0 && curr_len > 0) {
+          int to_copy = curr_len;
+          if (to_copy > space) to_copy = space;
+          memcpy(&buffer[cursor_y - 1][prev_len], buffer[cursor_y], to_copy);
+          buffer[cursor_y - 1][prev_len + to_copy] = '\0';
+        }
+        for (int i = cursor_y; i < num_rows - 1; i++) {
+          strcpy(buffer[i], buffer[i + 1]);
+        }
+        num_rows--;
+        buffer[num_rows][0] = '\0';
+
+        cursor_y--;
+        cursor_x = prev_len;
+        int new_len = strlen(buffer[cursor_y]);
+        if (cursor_x > new_len) cursor_x = new_len;
       }
     }
        
