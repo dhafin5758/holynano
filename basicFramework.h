@@ -15,6 +15,8 @@ extern char status_message[256];
 
 void disableRawMode(void);
 void enableRawMode(void);
+int getCurrentLine(void);
+int getCurrentColumn(void);
 void display_help(void);
 void refresh_screen(void);
 void setStatusMessage(const char *message);
