@@ -1,9 +1,22 @@
-#include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
 #include "basicLine.h"
+#include "manageFile.h"
+
+static void showReadOnlyMessage(void) {
+  setStatusMessage("VIEW ONLY | Editing disabled | Ctrl+X Exit");
+}
+
+static int blockIfViewOnly(void) {
+  if (!isViewOnlyMode()) {
+    return 0;
+  }
+
+  showReadOnlyMessage();
+  refresh_screen();
+  return 1;
+}
 
 void deleteLine() {
   if (num_rows == 0) return;
@@ -38,6 +51,15 @@ void copyLine() {
   clipboard[MAX_COLS - 1] = '\0';
 }
 
+void cutLine() {
+  if (num_rows == 0) {
+    clipboard[0] = '\0';
+    return;
+  }
+  copyLine();
+  deleteLine();
+}
+
 void pasteLine() {
   if (num_rows >= MAX_ROWS) return;
   if (clipboard[0] == '\0') return;
@@ -55,48 +77,10 @@ void pasteLine() {
   cursor_x = strlen(buffer[cursor_y]);
 }
 
-void startSelection() {
-  select_start = cursor_y;
-  select_end = -1;
-  clipboard_lines = 0;
-}
-
-void endSelection() {
-  if (select_start < 0) select_start = cursor_y;
-  select_end = cursor_y;
-  if (select_start > select_end) {
-    int temp = select_start;
-    select_start = select_end;
-    select_end = temp;
-  }
-  clipboard_lines = 0;
-  for (int i = select_start; i <= select_end && clipboard_lines < MAX_ROWS; i++) {
-    strncpy(clipboard_block[clipboard_lines], buffer[i], MAX_COLS - 1);
-    clipboard_block[clipboard_lines][MAX_COLS - 1] = '\0';
-    clipboard_lines++;
-  }
-}
-
-void pasteSelection() {
-  if (clipboard_lines == 0) return;
-  if (num_rows + clipboard_lines > MAX_ROWS) return; 
-  for (int i = num_rows - 1; i >= cursor_y + 1; i--) {
-    strncpy(buffer[i + clipboard_lines], buffer[i], MAX_COLS - 1);
-    buffer[i + clipboard_lines][MAX_COLS - 1] = '\0';
-  }
-  for (int i = 0; i < clipboard_lines; i++) {
-    strncpy(buffer[cursor_y + 1 + i], clipboard_block[i], MAX_COLS - 1);
-    buffer[cursor_y + 1 + i][MAX_COLS - 1] = '\0';
-  }
-  num_rows += clipboard_lines;
-  cursor_y += clipboard_lines;
-  cursor_x = strlen(buffer[cursor_y]);
-}
-
 void run_editor_loop(void) {
   char c;
   while (read(STDIN_FILENO, &c, 1) == 1) {
-    // Arrow keys are: ESC [ A/B/C/D
+
     if (c == '\x1b') {
       read(STDIN_FILENO, &c, 1);  // read [
       read(STDIN_FILENO, &c, 1);  // read A/B/C/D
@@ -122,24 +106,25 @@ void run_editor_loop(void) {
       break;
     }
      else if (c == 20) {  // Ctrl+T (delete line)
+      if (blockIfViewOnly()) continue;
       deleteLine();
     }
      else if (c == 25) {  // Ctrl+Y (copy line)
       copyLine();
     }
-     else if (c == 16) {  // Ctrl+P (paste line)
+    else if (c == 16) {  // Ctrl+P (paste line)
+      if (blockIfViewOnly()) continue;
       pasteLine();
     }
-    else if (c == 2) {   // Ctrl+B (start selection)
-      startSelection();
+    else if (c == 11) {  // Ctrl+K (cut line)
+      cutLine();
     }
-    else if (c == 5) {   // Ctrl+E (end selection)
-      endSelection();
-    }
-    else if (c == 15) {  // Ctrl+O (paste selection)
-      pasteSelection();
+    else if (c == 19) {  // Ctrl+S (save file)
+      saveFile();
     }
     else if (c >= 32 && c < 127) {  // printable char
+      if (blockIfViewOnly()) continue;
+
       int len = strlen(buffer[cursor_y]);
       if (len < MAX_COLS - 1) {
         if (cursor_x > len) cursor_x = len;
@@ -151,6 +136,8 @@ void run_editor_loop(void) {
       }
     }
     else if (c == '\r' || c == '\n') {  // Enter in raw mode is usually '\r'
+      if (blockIfViewOnly()) continue;
+
       if (num_rows < MAX_ROWS - 1) {
         int len = strlen(buffer[cursor_y]);
         if (cursor_x > len) cursor_x = len;
@@ -163,6 +150,8 @@ void run_editor_loop(void) {
       }
     }
     else if (c == 127) {  // Backspace
+      if (blockIfViewOnly()) continue;
+
       if (cursor_x > 0) {
         int len = strlen(buffer[cursor_y]);
         if (cursor_x <= len) {
@@ -170,6 +159,26 @@ void run_editor_loop(void) {
                   &buffer[cursor_y][cursor_x], len - cursor_x + 1);
           cursor_x--;
         }
+      } else if (cursor_y > 0) {
+        int prev_len = strlen(buffer[cursor_y - 1]);
+        int curr_len = strlen(buffer[cursor_y]);
+        int space = MAX_COLS - 1 - prev_len;
+        if (space > 0 && curr_len > 0) {
+          int to_copy = curr_len;
+          if (to_copy > space) to_copy = space;
+          memcpy(&buffer[cursor_y - 1][prev_len], buffer[cursor_y], to_copy);
+          buffer[cursor_y - 1][prev_len + to_copy] = '\0';
+        }
+        for (int i = cursor_y; i < num_rows - 1; i++) {
+          strcpy(buffer[i], buffer[i + 1]);
+        }
+        num_rows--;
+        buffer[num_rows][0] = '\0';
+
+        cursor_y--;
+        cursor_x = prev_len;
+        int new_len = strlen(buffer[cursor_y]);
+        if (cursor_x > new_len) cursor_x = new_len;
       }
     }
        
