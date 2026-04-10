@@ -55,44 +55,6 @@ void pasteLine() {
   cursor_x = strlen(buffer[cursor_y]);
 }
 
-void startSelection() {
-  select_start = cursor_y;
-  select_end = -1;
-  clipboard_lines = 0;
-}
-
-void endSelection() {
-  if (select_start < 0) select_start = cursor_y;
-  select_end = cursor_y;
-  if (select_start > select_end) {
-    int temp = select_start;
-    select_start = select_end;
-    select_end = temp;
-  }
-  clipboard_lines = 0;
-  for (int i = select_start; i <= select_end && clipboard_lines < MAX_ROWS; i++) {
-    strncpy(clipboard_block[clipboard_lines], buffer[i], MAX_COLS - 1);
-    clipboard_block[clipboard_lines][MAX_COLS - 1] = '\0';
-    clipboard_lines++;
-  }
-}
-
-void pasteSelection() {
-  if (clipboard_lines == 0) return;
-  if (num_rows + clipboard_lines > MAX_ROWS) return; 
-  for (int i = num_rows - 1; i >= cursor_y + 1; i--) {
-    strncpy(buffer[i + clipboard_lines], buffer[i], MAX_COLS - 1);
-    buffer[i + clipboard_lines][MAX_COLS - 1] = '\0';
-  }
-  for (int i = 0; i < clipboard_lines; i++) {
-    strncpy(buffer[cursor_y + 1 + i], clipboard_block[i], MAX_COLS - 1);
-    buffer[cursor_y + 1 + i][MAX_COLS - 1] = '\0';
-  }
-  num_rows += clipboard_lines;
-  cursor_y += clipboard_lines;
-  cursor_x = strlen(buffer[cursor_y]);
-}
-
 void run_editor_loop(void) {
   char c;
   while (read(STDIN_FILENO, &c, 1) == 1) {
@@ -127,18 +89,10 @@ void run_editor_loop(void) {
      else if (c == 25) {  // Ctrl+Y (copy line)
       copyLine();
     }
-     else if (c == 16) {  // Ctrl+P (paste line)
+    else if (c == 16) {  // Ctrl+P (paste line)
       pasteLine();
     }
-    else if (c == 2) {   // Ctrl+B (start selection)
-      startSelection();
-    }
-    else if (c == 5) {   // Ctrl+E (end selection)
-      endSelection();
-    }
-    else if (c == 15) {  // Ctrl+O (paste selection)
-      pasteSelection();
-    }
+    /* Selection keybindings (Ctrl+B/Ctrl+E/Ctrl+O) removed */
     else if (c >= 32 && c < 127) {  // printable char
       int len = strlen(buffer[cursor_y]);
       if (len < MAX_COLS - 1) {
