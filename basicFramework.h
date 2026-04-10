@@ -11,12 +11,10 @@ extern int cursor_x, cursor_y;
 extern int num_rows;
 extern struct termios orig_termios;
 extern char clipboard[MAX_COLS];
-extern char status_message[256];
 
 void disableRawMode(void);
 void enableRawMode(void);
 void display_help(void);
 void refresh_screen(void);
-void setStatusMessage(const char *message);
 
 #endif
