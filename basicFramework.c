@@ -34,10 +34,9 @@ void enableRawMode() {
 	atexit(disableRawMode);
 
 	struct termios raw = orig_termios;
-	raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
+	raw.c_lflag &= ~(ECHO | ICANON);
+	raw.c_iflag &= ~(IXON | ICRNL);
 	raw.c_oflag &= ~(OPOST);
-	raw.c_cflag |= (CS8);
-	raw.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
 	raw.c_cc[VMIN] = 1;
 	raw.c_cc[VTIME] = 0;
 
@@ -52,18 +51,31 @@ int getCurrentColumn(void) {
 	return cursor_x + 1;
 }
 
-void display_help() {
-	const char *help = isViewOnlyMode()
-		? "VIEW ONLY | Ctrl+X Exit|  "
-		: "Ctrl+S Save | Ctrl+T Delete Line | Ctrl+X Exit | Ctrl+P paste line | Ctrl+Y copy line| | Ctrl+K cut line|";
-	const char *text = status_message[0] != '\0' ? status_message : help;
-	char info_line[64];
+static void draw_bar_line(int row, const char *text, int cols) {
 	char pos[32];
+	int len = (int)strlen(text);
+
+	if (len > cols) len = cols;
+
+	snprintf(pos, sizeof(pos), "\x1b[%d;1H", row);
+	write(STDOUT_FILENO, pos, strlen(pos));
+	write(STDOUT_FILENO, "\x1b[7m", 4);
+	write(STDOUT_FILENO, text, len);
+	write(STDOUT_FILENO, "\x1b[K", 3);
+	write(STDOUT_FILENO, "\x1b[m", 3);
+}
+
+void display_help() {
+	const char *help1 = isViewOnlyMode()
+		? "VIEW ONLY | X Exit"
+		: "S Save | T Del | P Paste | Y Copy";
+	const char *help2 = isViewOnlyMode() ? "" : "K Cut | X Exit";
+	const char *line1 = status_message[0] != '\0' ? status_message : help1;
+	char line2[128];
+	char info_line[64];
 	struct winsize ws;
 	int rows = 24;
 	int cols = 80;
-	int help_len = strlen(text);
-	int info_len;
 	int help_row;
 	int info_row;
 
@@ -78,23 +90,14 @@ void display_help() {
 	if (info_row < 1) info_row = 1;
 
 	snprintf(info_line, sizeof(info_line), "Ln %d, Col %d", getCurrentLine(), getCurrentColumn());
-	info_len = strlen(info_line);
-	if (help_len > cols) help_len = cols;
-	if (info_len > cols) info_len = cols;
+	if (help2[0] != '\0') {
+		snprintf(line2, sizeof(line2), "%s | %s", help2, info_line);
+	} else {
+		snprintf(line2, sizeof(line2), "%s", info_line);
+	}
 
-	snprintf(pos, sizeof(pos), "\x1b[%d;1H", help_row);
-	write(STDOUT_FILENO, pos, strlen(pos));
-	write(STDOUT_FILENO, "\x1b[7m", 4);
-	write(STDOUT_FILENO, text, help_len);
-	write(STDOUT_FILENO, "\x1b[K", 3);
-	write(STDOUT_FILENO, "\x1b[m", 3);
-
-	snprintf(pos, sizeof(pos), "\x1b[%d;1H", info_row);
-	write(STDOUT_FILENO, pos, strlen(pos));
-	write(STDOUT_FILENO, "\x1b[7m", 4);
-	write(STDOUT_FILENO, info_line, info_len);
-	write(STDOUT_FILENO, "\x1b[K", 3);
-	write(STDOUT_FILENO, "\x1b[m", 3);
+	draw_bar_line(help_row, line1, cols);
+	draw_bar_line(info_row, line2, cols);
 }
 
 void refresh_screen() {
