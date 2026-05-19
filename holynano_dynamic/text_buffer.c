@@ -4,9 +4,18 @@
 #include "text_buffer.h"
 
 static char *duplicateTextInfo(const char *info) {
-  const char *source = info != NULL ? info : "";
-  size_t length = strlen(source);
-  char *duplicate = malloc(length + 1);
+  const char *source;
+  size_t length;
+  char *duplicate;
+
+  if (info != NULL) {
+    source = info;
+  } else {
+    source = "";
+  }
+
+  length = strlen(source);
+  duplicate = malloc(length + 1);
 
   if (duplicate == NULL) {
     return NULL;
