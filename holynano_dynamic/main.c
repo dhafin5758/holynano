@@ -2,6 +2,7 @@
 #include <unistd.h>
 
 #include "dhafin.h"
+#include "zaky.h"
 
 int main(void) {
   Buffer buffer;
