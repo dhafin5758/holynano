@@ -5,29 +5,29 @@
 
 #include "dhafin.h"
 
-static struct termios oldTerminal;
-static int rawModeOn = 0;
+static struct termios originalTerminal;
+static int isRawMode = 0;
 
 static char *copyInfo(const char *info) {
-  const char *source;
-  size_t length;
-  char *copy;
+  const char *text;
+  size_t textLength;
+  char *result;
 
   if (info != NULL) {
-    source = info;
+    text = info;
   } else {
-    source = "";
+    text = "";
   }
 
-  length = strlen(source);
-  copy = malloc(length + 1);
+  textLength = strlen(text);
+  result = malloc(textLength + 1);
 
-  if (copy == NULL) {
+  if (result == NULL) {
     return NULL;
   }
 
-  memcpy(copy, source, length + 1);
-  return copy;
+  strcpy(result, text);
+  return result;
 }
 
 void initBuffer(Buffer *buffer) {
@@ -141,29 +141,29 @@ void deleteNode(Buffer *buffer, Node *node) {
 }
 
 void clearBuffer(Buffer *buffer) {
-  Node *node;
+  Node *current;
 
   if (buffer == NULL) {
     return;
   }
 
-  node = buffer->head;
-  while (node != NULL) {
-    Node *next = node->next;
+  current = buffer->head;
+  while (current != NULL) {
+    Node *next = current->next;
 
-    free(node->info);
-    free(node);
+    free(current->info);
+    free(current);
 
-    node = next;
+    current = next;
   }
 
   initBuffer(buffer);
 }
 
 void disableRawMode(void) {
-  if (rawModeOn) {
-    tcsetattr(STDIN_FILENO, TCSAFLUSH, &oldTerminal);
-    rawModeOn = 0;
+  if (isRawMode) {
+    tcsetattr(STDIN_FILENO, TCSAFLUSH, &originalTerminal);
+    isRawMode = 0;
   }
 }
 
@@ -174,11 +174,11 @@ int enableRawMode(void) {
     return 1;
   }
 
-  if (tcgetattr(STDIN_FILENO, &oldTerminal) == -1) {
+  if (tcgetattr(STDIN_FILENO, &originalTerminal) == -1) {
     return 0;
   }
 
-  raw = oldTerminal;
+  raw = originalTerminal;
   raw.c_lflag &= ~(ECHO | ICANON);
   raw.c_iflag &= ~(IXON | ICRNL);
   raw.c_cc[VMIN] = 1;
@@ -188,7 +188,7 @@ int enableRawMode(void) {
     return 0;
   }
 
-  rawModeOn = 1;
+  isRawMode = 1;
   atexit(disableRawMode);
   return 1;
 }
