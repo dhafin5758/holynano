@@ -24,7 +24,9 @@ int main(int argc, char *argv[]) {
         filename = argv[1];
         loadFile(&buffer, filename);
     }
-
+    Node *cursor = buffer.head; 
+    int colIndex = 0;
+    
     /* AKTIFKAN RAW MODE */
     if (!enableRawMode()) {
         return 1;
@@ -33,6 +35,35 @@ int main(int argc, char *argv[]) {
     /* INPUT EDITOR */
     while (read(STDIN_FILENO, &c, 1) == 1) {
 
+        if (c == '\x1b') {
+            char seq[2];
+            if (read(STDIN_FILENO, &seq[0], 1) == 1 && read(STDIN_FILENO, &seq[1], 1) == 1) {
+                if (seq[0] == '[') {
+                    switch (seq[1]) {
+                      case 'A': 
+                        moveCursorUp(&cursor, &colIndex);
+                      break;
+                      case 'B': 
+                        moveCursorDown(&cursor, &colIndex);
+                      break;
+                      case 'C': 
+                        moveCursorRight(cursor, &colIndex);
+                      break;
+                      case 'D': 
+                        moveCursorLeft(cursor, &colIndex);
+                      break;
+                    }
+                }
+            }
+            refreshScreen(&buffer, cursor, colIndex);
+            continue;
+        }
+
+        if (c == 20) {
+            deleteLine(&buffer, &cursor);
+            colIndex = 0;
+            continue;
+        }
         /* CTRL + S */
         if (c == 19) {
             if (length > 0) {
