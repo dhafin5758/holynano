@@ -2,38 +2,6 @@
 
 char *clipboard = NULL;
 
-void refreshScreen(Buffer *buffer, Node *cursor, int colIndex) {
-    if (buffer == NULL) return;
-
-    write(STDOUT_FILENO, "\x1b[2J", 4);
-    write(STDOUT_FILENO, "\x1b[H", 3);
-
-    Node *current = buffer->head;
-    int rowNum = 1;
-    int cursorRow = 1;
-
-    while (current != NULL) {
-        if (current == cursor) {
-            cursorRow = rowNum;
-            printf("> %s\r\n", current->info);
-        } else {
-            printf("  %s\r\n", current->info);
-        }
-        current = current->next;
-        rowNum++;
-    }
-    
-    if (cursorRow < 1) cursorRow = 1;
-    int targetCol = colIndex + 3; 
-    if (targetCol < 1) targetCol = 1;
-
-    char gotoSeq[32];
-    sprintf(gotoSeq, "\x1b[%d;%dH", cursorRow, colIndex + 3);
-    write(STDOUT_FILENO, gotoSeq, strlen(gotoSeq));
-
-    fflush(stdout);
-}
-
 void moveCursorUp(Node **cursorNode, int *colIndex) {
     if (cursorNode == NULL || *cursorNode == NULL) return;
     
@@ -85,4 +53,28 @@ void deleteLine(Buffer *buffer, Node **cursorNode) {
     }
 
     deleteNode(buffer, toDelete);
+}
+
+void backspaceChar(Node *cursorNode, int *colIndex)
+{
+    int len;
+
+    if (cursorNode == NULL)
+        return;
+
+    if (colIndex == NULL)
+        return;
+
+    if (*colIndex <= 0)
+        return;
+
+    len = strlen(cursorNode->info);
+
+    memmove(
+        &cursorNode->info[*colIndex - 1],
+        &cursorNode->info[*colIndex],
+        len - *colIndex + 1
+    );
+
+    (*colIndex)--;
 }
