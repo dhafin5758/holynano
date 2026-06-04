@@ -23,10 +23,6 @@ char *copyInfo(const char *info) {
 }
 
 void initBuffer(Buffer *buffer) {
-  if (buffer == NULL) {
-    return;
-  }
-
   buffer->head = NULL;
   buffer->tail = NULL;
   buffer->length = 0;
@@ -44,10 +40,6 @@ Node *makeNode(const char *info) {
 
 int addLine(Buffer *buffer, const char *info) {
   Node *node;
-
-  if (buffer == NULL) {
-    return 0;
-  }
 
   node = makeNode(info);
 
@@ -67,14 +59,6 @@ int addLine(Buffer *buffer, const char *info) {
 int insertAfter(Buffer *buffer, Node *node, const char *info) {
   Node *newNode;
 
-  if (buffer == NULL) {
-    return 0;
-  }
-
-  if (node == NULL) {
-    return addLine(buffer, info);
-  }
-
   newNode = makeNode(info);
 
   newNode->prev = node;
@@ -93,10 +77,6 @@ int insertAfter(Buffer *buffer, Node *node, const char *info) {
 }
 
 void deleteNode(Buffer *buffer, Node *node) {
-  if (buffer == NULL || node == NULL) {
-    return;
-  }
-
   if (node->prev != NULL) {
     node->prev->next = node->next;
   } else {
@@ -119,10 +99,6 @@ void deleteNode(Buffer *buffer, Node *node) {
 
 void clearBuffer(Buffer *buffer) {
   Node *current;
-
-  if (buffer == NULL) {
-    return;
-  }
 
   current = buffer->head;
   while (current != NULL) {
