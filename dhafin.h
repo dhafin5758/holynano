@@ -1,4 +1,3 @@
-<<<<<<< HEAD:holynano_dynamic/dhafin.h
 #ifndef DHAFIN_H
 #define DHAFIN_H
 
@@ -26,5 +25,4 @@ int enableRawMode(void);
 void disableRawMode(void);
 
 #endif
-=======
 
