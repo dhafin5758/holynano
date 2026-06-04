@@ -19,6 +19,7 @@ void initBuffer(Buffer *buffer);
 Node *makeNode(const char *info);
 int addLine(Buffer *buffer, const char *info);
 int insertAfter(Buffer *buffer, Node *node, const char *info);
+void deleteNode(Buffer *buffer, Node *node);
 void clearBuffer(Buffer *buffer);
 int enableRawMode(void);
 void disableRawMode(void);

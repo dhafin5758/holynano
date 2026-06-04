@@ -33,6 +33,15 @@ int main(int argc, char *argv[]) {
     /* INPUT EDITOR */
     while (read(STDIN_FILENO, &c, 1) == 1) {
 
+        /* ARROW KEY: buang escape sequence agar tidak tercetak sebagai [A/[B/[C/[D */
+        if (c == '\x1b') {
+            char seq[2];
+
+            read(STDIN_FILENO, &seq[0], 1);
+            read(STDIN_FILENO, &seq[1], 1);
+            continue;
+        }
+
         /* CTRL + S */
         if (c == 19) {
             if (length > 0) {
@@ -63,7 +72,7 @@ int main(int argc, char *argv[]) {
             write(STDOUT_FILENO, "\r\n", 2);
         }
 
-        else if (c >= 32 && c < 127) {
+        else if (c >= 32 && c < 127) {  //A-Z, a-z, angka, spasi, tanda baca
             if (length + 1 >= capacity) {
                 char *newLine;
 

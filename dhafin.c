@@ -115,6 +115,31 @@ int insertAfter(Buffer *buffer, Node *node, const char *info) {
   return 1;
 }
 
+void deleteNode(Buffer *buffer, Node *node) {
+  if (buffer == NULL || node == NULL) {
+    return;
+  }
+
+  if (node->prev != NULL) {
+    node->prev->next = node->next;
+  } else {
+    buffer->head = node->next;
+  }
+
+  if (node->next != NULL) {
+    node->next->prev = node->prev;
+  } else {
+    buffer->tail = node->prev;
+  }
+
+  free(node->info);
+  free(node);
+
+  if (buffer->length > 0) {
+    buffer->length--;
+  }
+}
+
 void clearBuffer(Buffer *buffer) {
   Node *current;
 
