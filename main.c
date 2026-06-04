@@ -48,6 +48,8 @@ int main(int argc, char *argv[]) {
                 line[length] = '\0';
                 addLine(&buffer, line);
                 saveFile(&buffer, filename);
+                deleteNode(&buffer, buffer.tail);
+
             } else {
                 saveFile(&buffer, filename);
             }
