@@ -8,23 +8,15 @@
 static struct termios originalTerminal;
 static int isRawMode = 0;
 
-static char *copyInfo(const char *info) {
+char *copyInfo(const char *info) {
   const char *text;
   size_t textLength;
   char *result;
 
-  if (info != NULL) {
-    text = info;
-  } else {
-    text = "";
-  }
+  text = info;
 
   textLength = strlen(text);
   result = malloc(textLength + 1);
-
-  if (result == NULL) {
-    return NULL;
-  }
 
   strcpy(result, text);
   return result;
@@ -43,16 +35,7 @@ void initBuffer(Buffer *buffer) {
 Node *makeNode(const char *info) {
   Node *node = malloc(sizeof(Node));
 
-  if (node == NULL) {
-    return NULL;
-  }
-
   node->info = copyInfo(info);
-  if (node->info == NULL) {
-    free(node);
-    return NULL;
-  }
-
   node->prev = NULL;
   node->next = NULL;
 
@@ -67,9 +50,6 @@ int addLine(Buffer *buffer, const char *info) {
   }
 
   node = makeNode(info);
-  if (node == NULL) {
-    return 0;
-  }
 
   if (buffer->head == NULL) {
     buffer->head = node;
@@ -96,9 +76,6 @@ int insertAfter(Buffer *buffer, Node *node, const char *info) {
   }
 
   newNode = makeNode(info);
-  if (newNode == NULL) {
-    return 0;
-  }
 
   newNode->prev = node;
   newNode->next = node->next;
