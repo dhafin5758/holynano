@@ -24,13 +24,20 @@ int main(int argc, char *argv[]) {
         filename = argv[1];
         loadFile(&buffer, filename);
     }
-    Node *cursor = buffer.head; 
+    
+    if (buffer.head == NULL) {
+        addLine(&buffer, "");
+    }
+    
+    Node *cursor = buffer.head;  
     int colIndex = 0;
     
     /* AKTIFKAN RAW MODE */
     if (!enableRawMode()) {
         return 1;
     }
+
+    refreshScreen(&buffer, cursor, colIndex);
 
     /* INPUT EDITOR */
     while (read(STDIN_FILENO, &c, 1) == 1) {
