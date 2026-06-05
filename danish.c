@@ -8,7 +8,6 @@ void loadFile(Buffer *buffer, const char *filename) {
 
     FILE *file;
     char line[1024];
-    Node *current;
 
     if (buffer == NULL || filename == NULL) {
         return;
@@ -33,13 +32,6 @@ void loadFile(Buffer *buffer, const char *filename) {
 
     fclose(file);
 
-    /* TAMPILKAN ISI BUFFER */
-    current = buffer->head;
-
-    while (current != NULL) {
-        printf("%s\n", current->info);
-        current = current->next;
-    }
 }
 
 void saveFile(Buffer *buffer, const char *filename) {
@@ -130,13 +122,34 @@ int insertChar(Cursor *cursor, char **line, size_t *length, size_t *capacity, ch
 void redrawScreen(Buffer *buffer, const char *line, Node *cursorNode, size_t cursorColumn) {
 
     Node *current;
+    Node *start;
     size_t row = 1;
     size_t cursorRow = 1;
+    size_t cursorLine = 1;
+    size_t shown = 0;
+    const size_t maxRows = 24;
 
     clearScreen();
 
+    start = buffer->head;
     current = buffer->head;
-    while (current != NULL) {
+    while (current != NULL && current != cursorNode) {
+        cursorLine++;
+        current = current->next;
+    }
+
+    if (cursorNode != NULL && cursorLine > maxRows) {
+        start = cursorNode;
+        cursorLine = 1;
+
+        while (start->prev != NULL && cursorLine < maxRows) {
+            start = start->prev;
+            cursorLine++;
+        }
+    }
+
+    current = start;
+    while (current != NULL && shown < maxRows) {
 
         if (current == cursorNode) {
             cursorRow = row;
@@ -145,6 +158,7 @@ void redrawScreen(Buffer *buffer, const char *line, Node *cursorNode, size_t cur
         printf("%s\r\n", current->info);
         current = current->next;
         row++;
+        shown++;
     }
 
     if (line != NULL) {
@@ -153,6 +167,9 @@ void redrawScreen(Buffer *buffer, const char *line, Node *cursorNode, size_t cur
         if (cursorNode == NULL) {
             cursorRow = row;
         }
+    } else if (cursorNode == NULL) {
+        cursorRow = row;
+        cursorColumn = 0;
     }
 
     printf("\x1b[%zu;%zuH", cursorRow, cursorColumn + 1);
