@@ -114,7 +114,7 @@ void clearBuffer(Buffer *buffer) {
 }
 
 void clearScreen(void) {
-  system("clear");
+  system("clear"); //clear screen
 }
 
 void disableRawMode(void) {
