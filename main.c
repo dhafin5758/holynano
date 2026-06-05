@@ -14,6 +14,7 @@ int main(int argc, char *argv[]) {
     size_t length = 0;
     size_t capacity = 0;
     char c;
+    Cursor cursor;
 
     char *filename = "output.txt";
 
@@ -24,6 +25,8 @@ int main(int argc, char *argv[]) {
         filename = argv[1];
         loadFile(&buffer, filename);
     }
+
+    initCursor(&cursor, &buffer);
 
     /* AKTIFKAN RAW MODE */
     if (!enableRawMode()) {
@@ -39,6 +42,65 @@ int main(int argc, char *argv[]) {
 
             read(STDIN_FILENO, &seq[0], 1);
             read(STDIN_FILENO, &seq[1], 1);
+
+            if (seq[0] == '[') {
+
+                if (seq[1] == 'A') {
+                    if (cursor.node == NULL && buffer.tail != NULL) {
+                        cursor.node = buffer.tail;
+
+                        if (cursor.column > strlen(cursor.node->info)) {
+                            cursor.column = strlen(cursor.node->info);
+                        }
+                    } else {
+                    moveCursorUp(&cursorNode, &colIndex);
+                }
+
+                else if (seq[1] == 'B') {
+                    if (cursor.node != NULL && cursor.node->next == NULL) {
+                        cursor.node = NULL;
+
+                        if (cursor.column > length) {
+                            cursor.column = length;
+                        }
+                    } else {
+                    moveCursorDown(&cursorNode, &colIndex);
+                }
+
+                else if (seq[1] == 'C') {
+                    if (cursor.node == NULL && cursor.column < length) {
+                        cursor.column++;
+                    } else if (cursor.node != NULL &&
+                               cursor.node->next == NULL &&
+                               cursor.column >= strlen(cursor.node->info)) {
+                        cursor.node = NULL;
+
+                        if (cursor.column > length) {
+                            cursor.column = length;
+                        }
+                    } else {
+                    moveCursorRight(cursorNode, &colIndex);
+                }
+
+                else if (seq[1] == 'D') {
+                    if (cursor.node == NULL && cursor.column > 0) {
+                        cursor.column--;
+                    } else if (cursor.node == NULL && buffer.tail != NULL) {
+                        cursor.node = buffer.tail;
+                        cursor.column = strlen(cursor.node->info);
+                    } else {
+                    moveCursorLeft(cursorNode, &colIndex);
+                }
+            }
+
+            redrawScreen(&buffer, line, cursor.node, cursor.column);
+
+            continue;
+        }
+
+        if (c == 20) {
+            deleteLine(&buffer, &cursor);
+            redrawScreen(&buffer,line,cursor.node,cursor.column);
             continue;
         }
 
@@ -59,6 +121,12 @@ int main(int argc, char *argv[]) {
         /* CTRL + X */
         if (c == 24) {
         break;
+        }
+        
+        if (c == 127 || c == 8) {
+            backspaceChar(&cursor, line, &length);
+            redrawScreen(&buffer, line, cursor.node, cursor.column);
+            continue;
         }
 
         /* ENTER */
