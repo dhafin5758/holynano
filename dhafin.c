@@ -1,40 +1,25 @@
-#include <stdlib.h>
-#include <string.h>
-#include <termios.h>
-#include <unistd.h>
 
-#include "dhafin.h"
+
+  #include "dhafin.h"
 
 static struct termios originalTerminal;
 static int isRawMode = 0;
 
-static char *copyInfo(const char *info) {
+char *copyInfo(const char *info) {
   const char *text;
   size_t textLength;
   char *result;
 
-  if (info != NULL) {
-    text = info;
-  } else {
-    text = "";
-  }
+  text = info;
 
   textLength = strlen(text);
   result = malloc(textLength + 1);
-
-  if (result == NULL) {
-    return NULL;
-  }
 
   strcpy(result, text);
   return result;
 }
 
 void initBuffer(Buffer *buffer) {
-  if (buffer == NULL) {
-    return;
-  }
-
   buffer->head = NULL;
   buffer->tail = NULL;
   buffer->length = 0;
@@ -43,16 +28,7 @@ void initBuffer(Buffer *buffer) {
 Node *makeNode(const char *info) {
   Node *node = malloc(sizeof(Node));
 
-  if (node == NULL) {
-    return NULL;
-  }
-
   node->info = copyInfo(info);
-  if (node->info == NULL) {
-    free(node);
-    return NULL;
-  }
-
   node->prev = NULL;
   node->next = NULL;
 
@@ -62,14 +38,7 @@ Node *makeNode(const char *info) {
 int addLine(Buffer *buffer, const char *info) {
   Node *node;
 
-  if (buffer == NULL) {
-    return 0;
-  }
-
   node = makeNode(info);
-  if (node == NULL) {
-    return 0;
-  }
 
   if (buffer->head == NULL) {
     buffer->head = node;
@@ -87,18 +56,7 @@ int addLine(Buffer *buffer, const char *info) {
 int insertAfter(Buffer *buffer, Node *node, const char *info) {
   Node *newNode;
 
-  if (buffer == NULL) {
-    return 0;
-  }
-
-  if (node == NULL) {
-    return addLine(buffer, info);
-  }
-
   newNode = makeNode(info);
-  if (newNode == NULL) {
-    return 0;
-  }
 
   newNode->prev = node;
   newNode->next = node->next;
@@ -115,12 +73,29 @@ int insertAfter(Buffer *buffer, Node *node, const char *info) {
   return 1;
 }
 
+void deleteNode(Buffer *buffer, Node *node) {
+  if (node->prev != NULL) {
+    node->prev->next = node->next;
+  } else {
+    buffer->head = node->next;
+  }
+
+  if (node->next != NULL) {
+    node->next->prev = node->prev;
+  } else {
+    buffer->tail = node->prev;
+  }
+
+  free(node->info);
+  free(node);
+
+  if (buffer->length > 0) {
+    buffer->length--;
+  }
+}
+
 void clearBuffer(Buffer *buffer) {
   Node *current;
-
-  if (buffer == NULL) {
-    return;
-  }
 
   current = buffer->head;
   while (current != NULL) {
@@ -133,6 +108,10 @@ void clearBuffer(Buffer *buffer) {
   }
 
   initBuffer(buffer);
+}
+
+void clearScreen(void) {
+  system("clear"); //clear screen
 }
 
 void disableRawMode(void) {
@@ -153,9 +132,17 @@ int enableRawMode(void) {
     return 0;
   }
 
+/* ECHO:
+- terminal tidak otomatis menampilkan input.
+ICANON:
+- input tidak perlu menunggu Enter
+IXON:
+- Ctrl-S dan Ctrl-Q tidak ditangani terminal.
+ICRNL:
+- Enter tidak otomatis dikonversi terminal. */
   raw = originalTerminal;
   raw.c_lflag &= ~(ECHO | ICANON);
-  raw.c_iflag &= ~(IXON | ICRNL);
+  raw.c_iflag &= ~(IXON | ICRNL); 
   raw.c_cc[VMIN] = 1;
   raw.c_cc[VTIME] = 0;
 
