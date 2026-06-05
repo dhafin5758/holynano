@@ -1,9 +1,6 @@
-#include <stdlib.h>
-#include <string.h>
-#include <termios.h>
-#include <unistd.h>
 
-#include "dhafin.h"
+
+  #include "dhafin.h"
 
 static struct termios originalTerminal;
 static int isRawMode = 0;

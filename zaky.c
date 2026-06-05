@@ -76,6 +76,7 @@ void moveCursorRight(Cursor *cursor) {
 }
 
 void moveCursorUp(Cursor *cursor) {
+    
     if (cursor == NULL || cursor->node == NULL) {
         return;
     }
@@ -97,34 +98,54 @@ void moveCursorDown(Cursor *cursor) {
     }
 }
 
-void deleteLine(Buffer *buffer, Cursor *cursor){
+void deleteLine(Buffer *buffer, Cursor *cursor, char *line, size_t *length) {
     Node *toDelete;
+    size_t oldColumn;
 
-    if (buffer == NULL ||cursor == NULL ||cursor->node == NULL){
+    if (buffer == NULL || cursor == NULL) {
         return;
     }
 
+    if (cursor->node == NULL) {
+        if (line != NULL && length != NULL) {
+            line[0] = '\0';
+            *length = 0;
+        }
+
+        cursor->column = 0;
+        return;
+    }
+
+    oldColumn = cursor->column;
     toDelete = cursor->node;
 
-    if (toDelete->next != NULL){
+    if (toDelete->next != NULL) {
         cursor->node = toDelete->next;
-    }
-    else if (toDelete->prev != NULL){
+    } else if (toDelete->prev != NULL) {
         cursor->node = toDelete->prev;
-    }
-    else{
+    } else {
         cursor->node = NULL;
     }
-    cursor->column = 0;
+
     deleteNode(buffer, toDelete);
+
+    cursor->column = oldColumn;
+    limitCursorColumn(cursor);
 }
 
 void backspaceChar(Cursor *cursor, char *line, size_t *length) {
+    if (cursor == NULL) {
+        return;
+    }
 
     if (cursor->node != NULL) {
         size_t nodeLength = getLineLength(cursor->node);
 
-        if (cursor->column > 0 && cursor->column <= nodeLength) {
+        if (cursor->column > nodeLength) {
+            cursor->column = nodeLength;
+        }
+
+        if (cursor->column > 0) {
             memmove(&cursor->node->info[cursor->column - 1],
                     &cursor->node->info[cursor->column],
                     nodeLength - cursor->column + 1);
@@ -134,13 +155,17 @@ void backspaceChar(Cursor *cursor, char *line, size_t *length) {
         return;
     }
 
-    if (line != NULL && length != NULL &&
-        cursor->column > 0 && cursor->column <= *length) {
-        memmove(&line[cursor->column - 1],
-                &line[cursor->column],
-                *length - cursor->column + 1);
-        cursor->column--;
-        (*length)--;
+    if (line != NULL && length != NULL) {
+        if (cursor->column > *length) {
+            cursor->column = *length;
+        }
+
+        if (cursor->column > 0) {
+            memmove(&line[cursor->column - 1],
+                    &line[cursor->column],
+                    *length - cursor->column + 1);
+            cursor->column--;
+            (*length)--;
+        }
     }
 }
-
