@@ -26,13 +26,13 @@ static void limitCursorColumn(Cursor *cursor) {
 void initCursor(Cursor *cursor, Buffer *buffer) {
     if (cursor == NULL) {
         return;
-    }
+    }   
 
     cursor->node = NULL;
     cursor->column = 0;
 
     if (buffer != NULL) {
-        cursor->node = buffer->head;
+        cursor->node = buffer->tail;
         limitCursorColumn(cursor);
     }
 }
