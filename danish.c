@@ -73,7 +73,6 @@ void saveFile(Buffer *buffer, const char *filename) {
 }
 
 int insertChar(Cursor *cursor, char **line, size_t *length, size_t *capacity, char c) {
-
     if (cursor->node != NULL) {
         size_t nodeLength = strlen(cursor->node->info);
         char *newInfo;
