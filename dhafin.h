@@ -4,7 +4,7 @@
 #include <stddef.h>
 
 typedef struct Node {
-  char *info;
+  char *info; //point ke first char
   struct Node *prev;
   struct Node *next;
 } Node;
@@ -21,6 +21,7 @@ int addLine(Buffer *buffer, const char *info);
 int insertAfter(Buffer *buffer, Node *node, const char *info);
 void deleteNode(Buffer *buffer, Node *node);
 void clearBuffer(Buffer *buffer);
+void clearScreen(void);
 int enableRawMode(void);
 void disableRawMode(void);
 

@@ -32,12 +32,13 @@ int main(int argc, char *argv[]) {
     if (!enableRawMode()) {
         return 1;
     }
+    clearScreen();
 
     /* INPUT EDITOR */
     while (read(STDIN_FILENO, &c, 1) == 1) {
 
         /* ARROW KEY: buang escape sequence agar tidak tercetak sebagai [A/[B/[C/[D */
-        if (c == '\x1b') {
+        if (c == '\x1b') {  
             char seq[2];
 
             read(STDIN_FILENO, &seq[0], 1);
