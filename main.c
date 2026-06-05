@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
     if (!enableRawMode()) {
         return 1;
     }
-    
+
     redrawScreen(&buffer, line, cursor.node, cursor.column);
 
     /* INPUT EDITOR */
@@ -57,9 +57,7 @@ int main(int argc, char *argv[]) {
                 } else {
                     moveCursorUp(&cursor);
                 }
-                }
-
-                else if (seq[1] == 'B') {
+                } else if (seq[1] == 'B') {
                     if (cursor.node != NULL && cursor.node->next == NULL) {
                     cursor.node = NULL;
 
@@ -69,10 +67,7 @@ int main(int argc, char *argv[]) {
                 } else {
                     moveCursorDown(&cursor);
                 }
-                }
-                
-
-                else if (seq[1] == 'C') {
+                } else if (seq[1] == 'C') {
                 if (cursor.node == NULL && cursor.column < length) {
                     cursor.column++;
                 } else if (cursor.node != NULL &&
@@ -86,9 +81,7 @@ int main(int argc, char *argv[]) {
                 } else {
                     moveCursorRight(&cursor);
                 }
-                }
-
-                else if (seq[1] == 'D') {
+                } else if (seq[1] == 'D') {
                    if (cursor.node == NULL && cursor.column > 0) {
                     cursor.column--;
                 } else if (cursor.node == NULL && buffer.tail != NULL) {
@@ -101,6 +94,7 @@ int main(int argc, char *argv[]) {
             }
 
 
+            redrawScreen(&buffer, line, cursor.node, cursor.column);
             continue;
         }
 

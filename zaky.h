@@ -1,7 +1,6 @@
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
+#ifndef ZAKY_H
+#define ZAKY_H
+
 #include "dhafin.h"
 
 typedef struct Cursor {
@@ -20,3 +19,5 @@ void moveCursorRight(Cursor *cursor);
 void deleteLine(Buffer *buffer, Cursor *cursor);
 
 void backspaceChar(Cursor *cursor, char *line, size_t *length);
+
+#endif

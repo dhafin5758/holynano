@@ -2,7 +2,10 @@
 #define DHAFIN_H
 
 #include <stddef.h>
-
+#include <stdlib.h>
+#include <string.h>
+#include <termios.h>
+#include <unistd.h>
 typedef struct Node {
   char *info; //point ke first char
   struct Node *prev;
