@@ -19,4 +19,4 @@ void moveCursorRight(Cursor *cursor);
 
 void deleteLine(Buffer *buffer, Cursor *cursor);
 
-void backspaceChar(Node *cursorNode, int *colIndex);
+void backspaceChar(Cursor *cursor, char *line, size_t *length);

@@ -76,6 +76,7 @@ void moveCursorRight(Cursor *cursor) {
 }
 
 void moveCursorUp(Cursor *cursor) {
+    
     if (cursor == NULL || cursor->node == NULL) {
         return;
     }

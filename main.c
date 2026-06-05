@@ -32,7 +32,8 @@ int main(int argc, char *argv[]) {
     if (!enableRawMode()) {
         return 1;
     }
-    clearScreen();
+    
+    redrawScreen(&buffer, line, cursor.node, cursor.column);
 
     /* INPUT EDITOR */
     while (read(STDIN_FILENO, &c, 1) == 1) {
@@ -48,60 +49,63 @@ int main(int argc, char *argv[]) {
 
                 if (seq[1] == 'A') {
                     if (cursor.node == NULL && buffer.tail != NULL) {
-                        cursor.node = buffer.tail;
+                    cursor.node = buffer.tail;
 
-                        if (cursor.column > strlen(cursor.node->info)) {
-                            cursor.column = strlen(cursor.node->info);
-                        }
-                    } else {
-                    moveCursorUp(&cursorNode, &colIndex);
+                    if (cursor.column > strlen(cursor.node->info)) {
+                    cursor.column = strlen(cursor.node->info);
+                    }
+                } else {
+                    moveCursorUp(&cursor);
+                }
                 }
 
                 else if (seq[1] == 'B') {
                     if (cursor.node != NULL && cursor.node->next == NULL) {
-                        cursor.node = NULL;
+                    cursor.node = NULL;
 
-                        if (cursor.column > length) {
-                            cursor.column = length;
-                        }
-                    } else {
-                    moveCursorDown(&cursorNode, &colIndex);
+                    if (cursor.column > length) {
+                    cursor.column = length;
+                    }
+                } else {
+                    moveCursorDown(&cursor);
                 }
+                }
+                
 
                 else if (seq[1] == 'C') {
-                    if (cursor.node == NULL && cursor.column < length) {
-                        cursor.column++;
-                    } else if (cursor.node != NULL &&
-                               cursor.node->next == NULL &&
-                               cursor.column >= strlen(cursor.node->info)) {
-                        cursor.node = NULL;
+                if (cursor.node == NULL && cursor.column < length) {
+                    cursor.column++;
+                } else if (cursor.node != NULL &&
+                            cursor.node->next == NULL &&
+                            cursor.column >= strlen(cursor.node->info)) {
+                    cursor.node = NULL;
 
-                        if (cursor.column > length) {
-                            cursor.column = length;
-                        }
-                    } else {
-                    moveCursorRight(cursorNode, &colIndex);
+                    if (cursor.column > length) {
+                    cursor.column = length;
+                    }
+                } else {
+                    moveCursorRight(&cursor);
+                }
                 }
 
                 else if (seq[1] == 'D') {
-                    if (cursor.node == NULL && cursor.column > 0) {
-                        cursor.column--;
-                    } else if (cursor.node == NULL && buffer.tail != NULL) {
-                        cursor.node = buffer.tail;
-                        cursor.column = strlen(cursor.node->info);
-                    } else {
-                    moveCursorLeft(cursorNode, &colIndex);
+                   if (cursor.node == NULL && cursor.column > 0) {
+                    cursor.column--;
+                } else if (cursor.node == NULL && buffer.tail != NULL) {
+                    cursor.node = buffer.tail;
+                    cursor.column = strlen(cursor.node->info);
+                } else {
+                   moveCursorLeft(&cursor);
+                }
                 }
             }
 
-            redrawScreen(&buffer, line, cursor.node, cursor.column);
 
             continue;
         }
 
         if (c == 20) {
             deleteLine(&buffer, &cursor);
-            redrawScreen(&buffer,line,cursor.node,cursor.column);
             continue;
         }
 
@@ -126,7 +130,6 @@ int main(int argc, char *argv[]) {
         
         if (c == 127 || c == 8) {
             backspaceChar(&cursor, line, &length);
-            redrawScreen(&buffer, line, cursor.node, cursor.column);
             continue;
         }
 
