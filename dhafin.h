@@ -12,7 +12,7 @@ typedef struct Node {
 typedef struct Buffer {
   Node *head;
   Node *tail;
-  size_t length; //unsigned int (node length) 
+  size_t length;
 } Buffer;
 
 void initBuffer(Buffer *buffer);
@@ -26,3 +26,4 @@ int enableRawMode(void);
 void disableRawMode(void);
 
 #endif
+
