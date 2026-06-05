@@ -113,6 +113,10 @@ void clearBuffer(Buffer *buffer) {
   initBuffer(buffer);
 }
 
+void clearScreen(void) {
+  system("clear");
+}
+
 void disableRawMode(void) {
   if (isRawMode) {
     tcsetattr(STDIN_FILENO, TCSAFLUSH, &originalTerminal);
@@ -131,9 +135,17 @@ int enableRawMode(void) {
     return 0;
   }
 
+/* ECHO:
+- terminal tidak otomatis menampilkan input.
+ICANON:
+- input tidak perlu menunggu Enter
+IXON:
+- Ctrl-S dan Ctrl-Q tidak ditangani terminal.
+ICRNL:
+- Enter tidak otomatis dikonversi terminal. */
   raw = originalTerminal;
   raw.c_lflag &= ~(ECHO | ICANON);
-  raw.c_iflag &= ~(IXON | ICRNL);
+  raw.c_iflag &= ~(IXON | ICRNL); 
   raw.c_cc[VMIN] = 1;
   raw.c_cc[VTIME] = 0;
 
