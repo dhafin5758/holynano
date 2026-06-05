@@ -149,34 +149,14 @@ int main(int argc, char *argv[]) {
 
             redrawScreen(&buffer, line, cursor.node, cursor.column);
         }
-        else if (c >= 32 && c < 127) {  //A-Z, a-z, angka, spasi, tanda baca
-            if (length + 1 >= capacity) {
-                char *newLine;
-
-                if (capacity == 0) {
-                    capacity = 16;
-                } else {
-                    capacity = capacity * 2;
-                }
-
-                newLine = realloc(line, capacity);
-                if (newLine == NULL) {
-                    free(line);
-                    clearBuffer(&buffer);       
-                    return 1;
-                }
-
-                line = newLine;
+       else if (c >= 32 && c < 127) {  //A-Z, a-z, angka, spasi, tanda baca
+            if (!insertChar(&cursor, &line, &length, &capacity, c)) {
+                free(line);
+                clearBuffer(&buffer);
+                return 1;
             }
 
-            line[length] = c;
-length++;
-line[length] = '\0';
-
-cursor.node = NULL;
-cursor.column = length;
-
-redrawScreen(&buffer, line, cursor.node, cursor.column);
+            redrawScreen(&buffer, line, cursor.node, cursor.column);
         }
     }
 
