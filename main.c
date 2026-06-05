@@ -99,7 +99,8 @@ int main(int argc, char *argv[]) {
         }
 
         if (c == 20) {
-            deleteLine(&buffer, &cursor);
+            deleteLine(&buffer, &cursor, line, &length);
+            redrawScreen(&buffer, line, cursor.node, cursor.column);
             continue;
         }
 
@@ -124,6 +125,7 @@ int main(int argc, char *argv[]) {
         
         if (c == 127 || c == 8) {
             backspaceChar(&cursor, line, &length);
+            redrawScreen(&buffer, line, cursor.node, cursor.column);
             continue;
         }
 
@@ -137,9 +139,16 @@ int main(int argc, char *argv[]) {
             }
 
             length = 0;
-            write(STDOUT_FILENO, "\r\n", 2);
-        }
 
+            if (line != NULL) {
+                line[0] = '\0';
+            }
+
+            cursor.node = NULL;
+            cursor.column = 0;
+
+            redrawScreen(&buffer, line, cursor.node, cursor.column);
+        }
         else if (c >= 32 && c < 127) {  //A-Z, a-z, angka, spasi, tanda baca
             if (length + 1 >= capacity) {
                 char *newLine;
@@ -161,9 +170,13 @@ int main(int argc, char *argv[]) {
             }
 
             line[length] = c;
-            length++;
-            line[length] = '\0';
-            write(STDOUT_FILENO, &c, 1);
+length++;
+line[length] = '\0';
+
+cursor.node = NULL;
+cursor.column = length;
+
+redrawScreen(&buffer, line, cursor.node, cursor.column);
         }
     }
 

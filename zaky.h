@@ -16,7 +16,7 @@ void moveCursorDown(Cursor *cursor);
 void moveCursorLeft(Cursor *cursor);
 void moveCursorRight(Cursor *cursor);
 
-void deleteLine(Buffer *buffer, Cursor *cursor);
+void deleteLine(Buffer *buffer, Cursor *cursor, char *line, size_t *length);
 
 void backspaceChar(Cursor *cursor, char *line, size_t *length);
 
