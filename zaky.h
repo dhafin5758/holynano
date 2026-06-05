@@ -4,12 +4,19 @@
 #include <unistd.h>
 #include "dhafin.h"
 
-void moveCursorUp(Node **cursorNode, int *colIndex);
-void moveCursorDown(Node **cursorNode, int *colIndex);
-void moveCursorLeft(Node *cursorNode, int *colIndex);
-void moveCursorRight(Node *cursorNode, int *colIndex);
+typedef struct Cursor {
+    Node *node;
+    size_t column;
+} Cursor;
 
-void deleteLine(Buffer *buffer, Node **cursorNode);
+void initCursor(Cursor *cursor, Buffer *buffer);
+void setCursor(Cursor *cursor, Node *node) ;
+
+void moveCursorUp(Cursor *cursor);
+void moveCursorDown(Cursor *cursor);
+void moveCursorLeft(Cursor *cursor);
+void moveCursorRight(Cursor *cursor);
+
+void deleteLine(Buffer *buffer, Cursor *cursor);
 
 void backspaceChar(Node *cursorNode, int *colIndex);
-
